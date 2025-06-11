@@ -44,7 +44,30 @@ pub fn main() !void {
                 if(!findFiles) try stdout.print("{s}: not found\n",.{pieces.rest()});
             }
         } else {
-            try stdout.print("{s}: command not found\n", .{user_input});
+            var findCommand = false;
+            const allocator = std.heap.page_allocator;
+            const env = try std.process.getEnvMap(allocator);
+            var paths = std.mem.splitScalar(u8, env.get("PATH") orelse return error.OptionalValueIsNull, ':');
+            var args = std.ArrayList([]const u8).init(allocator);
+            defer args.deinit();
+            pieces.reset();
+            while(pieces.next()) |arg| { try args.append(arg);}
+            while(paths.next()) |path| {
+                const abs_path = try std.fmt.allocPrint(allocator, "{s}/{s}", .{path, cmd});
+                defer allocator.free(abs_path);
+                _ = std.fs.openFileAbsolute(abs_path, .{}) catch continue;
+                var child = std.process.Child.init(args.items, allocator);
+                child.stdout = std.io.getStdOut();
+                child.stderr = std.io.getStdErr();
+                child.stdin = std.io.getStdIn();
+
+                _ = try child.spawnAndWait();
+                findCommand = true;
+                break;
+            }
+
+
+            if(!findCommand) try stdout.print("{s}: command not found\n", .{user_input});
         }
     }
 }
