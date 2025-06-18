@@ -188,24 +188,38 @@ fn customParse(allocator: std.mem.Allocator, input: []const u8) ![][]const u8 {
         if(i >= input.len) break;
 
         var in_quotes = false;
+        var in_double_quotes = false;
         var arg_content = std.ArrayList(u8).init(allocator);
         defer arg_content.deinit();
+        var already_added = false;
 
         while (i < input.len) : (i += 1){
+            already_added = false;
             const char = input[i];
 
-            if (char == '\'' and !in_quotes) {
-                in_quotes = true;
+            if(char == '\"' and !in_double_quotes and !in_quotes){
+                in_double_quotes = true;
                 continue;
-            } else if (char == '\'' and in_quotes) {
+            }else if(char == '\"' and in_double_quotes){
+                in_double_quotes = false;
+                continue;
+            } else if(char == '\"' and in_quotes and !in_double_quotes){
+                try arg_content.append(char);
+            } else if( char == '\'' and !in_quotes and !in_double_quotes){
+
+                in_quotes = true;
+            continue;
+            } else if(char == '\'' and in_quotes and !in_double_quotes){
                 in_quotes = false;
                 continue;
-            } else if (std.ascii.isWhitespace(input[i]) and !in_quotes){
+            } else if (std.ascii.isWhitespace(input[i]) and !in_double_quotes and !in_quotes){
                 break;
             } else {
                 try arg_content.append( char);
+                already_added = true;
             }
 
+            
         }
         if(arg_content.items.len > 0){
             const arg = try allocator.dupe(u8, arg_content.items);
