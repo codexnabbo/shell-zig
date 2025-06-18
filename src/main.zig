@@ -191,12 +191,15 @@ fn customParse(allocator: std.mem.Allocator, input: []const u8) ![][]const u8 {
         var in_double_quotes = false;
         var arg_content = std.ArrayList(u8).init(allocator);
         defer arg_content.deinit();
-        var already_added = false;
+        var is_backslash = false;
 
         while (i < input.len) : (i += 1){
-            already_added = false;
             const char = input[i];
-
+            if(is_backslash){
+                try arg_content.append(char);
+                is_backslash = false;
+                continue;
+            }
             if(char == '\"' and !in_double_quotes and !in_quotes){
                 in_double_quotes = true;
                 continue;
@@ -212,11 +215,13 @@ fn customParse(allocator: std.mem.Allocator, input: []const u8) ![][]const u8 {
             } else if(char == '\'' and in_quotes and !in_double_quotes){
                 in_quotes = false;
                 continue;
+            } else if(char == '\\' and !in_quotes and !in_double_quotes){
+                is_backslash = true;
+                continue;
             } else if (std.ascii.isWhitespace(input[i]) and !in_double_quotes and !in_quotes){
                 break;
             } else {
                 try arg_content.append( char);
-                already_added = true;
             }
 
             
