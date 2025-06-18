@@ -1,34 +1,55 @@
-[![progress-banner](https://backend.codecrafters.io/progress/shell/b8c773c2-a5a4-4487-8d45-80419dbdb239)](https://app.codecrafters.io/users/codecrafters-bot?r=2qF)
-
 This is a starting point for Zig solutions to the
 ["Build Your Own Shell" Challenge](https://app.codecrafters.io/courses/shell/overview).
 
-In this challenge, you'll build your own POSIX compliant shell that's capable of
-interpreting shell commands, running external programs and builtin commands like
-cd, pwd, echo and more. Along the way, you'll learn about shell command parsing,
-REPLs, builtin commands, and more.
+# Custom shell in Zig
+A simple shell program written in zig
 
-**Note**: If you're viewing this repo on GitHub, head over to
-[codecrafters.io](https://codecrafters.io) to try the challenge.
+## ✨ Features
 
-# Passing the first stage
+### Built-in Commands
+- **`echo`** - Print text to stdout
+- **`exit`** - Terminate the shell (with optional exit code)
+- **`type`** - Determine command type (builtin or executable)
 
-The entry point for your `shell` implementation is in `src/main.zig`. Study and
-uncomment the relevant code, and push your changes to pass the first stage:
+### Advanced Functionality
+- **Smart argument parsing** with support for:
+  - Single and double quotes
+  - Backslash escape sequences
+  - Proper whitespace handling
+- **Automatic PATH resolution** for external commands
+- **External program execution** with argument passing
+- **Environment variable handling**
+- **Optimized memory management** with arena allocator per command cycle
 
-```sh
-git commit -am "pass 1st stage" # any msg
-git push origin master
+## 💾 Memory Management
+
+Two-tier allocation strategy for optimal performance:
+
+```zig
+var debug_allocator = std.heap.DebugAllocator(.{}).init;
+var arena_allocator = std.heap.ArenaAllocator.init(gpa);
 ```
 
-Time to move on to the next stage!
+- **Debug Allocator**: Detects memory leaks in development
+- **Arena Allocator**: Automatic cleanup after each command execution
 
-# Stage 2 & beyond
+## 📋 Usage Examples
 
-Note: This section is for stages 2 and beyond.
+```bash
+$ echo "Hello, World!"
+Hello, World!
 
-1. Ensure you have `zig (0.14)` installed locally
-1. Run `./your_program.sh` to run your program, which is implemented in
-   `src/main.zig`.
-1. Commit your changes and run `git push origin master` to submit your solution
-   to CodeCrafters. Test output will be streamed to your terminal.
+$ echo 'Single quotes preserve everything'
+Single quotes preserve everything
+
+$ type echo
+echo is a shell builtin
+
+$ type ls
+ls is /bin/ls
+
+$ exit 0
+```
+## 📝 License
+
+This project is part of the CodeCrafters Shell challenge implementation.
